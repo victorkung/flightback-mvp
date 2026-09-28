@@ -1,5 +1,5 @@
 // The only file that knows about the flight data provider (AeroDataBox via RapidAPI).
-// To move to FlightAware AeroAPI, rewrite this file and keep getFlightArrival's contract.
+// To move to FlightAware AeroAPI, rewrite this file and keep getFlightTrips's contract.
 import "server-only";
 import type { FlightArrival } from "./types";
 
@@ -61,40 +61,60 @@ function airport(a?: AdbAirport) {
   };
 }
 
-function normalize(f: AdbFlight, flightNumber: string, date: string): FlightArrival | null {
-  const scheduled = toIso(f.arrival?.scheduledTime?.utc);
-  if (!scheduled) return null;
-  const actual = actualArrival(f);
+const minutesBetween = (from: string | null, to: string | null) =>
+  from && to ? Math.round((Date.parse(to) - Date.parse(from)) / 60000) : null;
+
+/**
+ * One trip over legs[i..j], flown as a single through flight. Delay is judged at the last
+ * leg's arrival, since that is when the traveler reached their destination. A cancelled or
+ * diverted leg anywhere on the way sets the status for the whole trip.
+ */
+function toTrip(legs: AdbFlight[], flightNumber: string, date: string): FlightArrival {
+  const first = legs[0];
+  const last = legs[legs.length - 1];
+  const scheduled = toIso(last.arrival?.scheduledTime?.utc);
+  const actual = actualArrival(last);
+  const disrupted = legs.find((l) => /cancel|divert/i.test(l.status ?? ""));
+  const origin = airport(first.departure?.airport);
+  const destination = airport(last.arrival?.airport);
   return {
     flightNumber,
     date,
-    origin: airport(f.departure?.airport),
-    destination: airport(f.arrival?.airport),
+    route: `${origin.iata}-${destination.iata}`,
+    origin,
+    destination,
+    via: legs.slice(1).map((l) => airport(l.departure?.airport)),
+    scheduledDepartureUtc: toIso(first.departure?.scheduledTime?.utc),
     scheduledArrivalUtc: scheduled,
     actualArrivalUtc: actual,
-    delayMinutes: actual ? Math.round((Date.parse(actual) - Date.parse(scheduled)) / 60000) : null,
-    status: f.status ?? "Unknown",
-    airline: f.airline?.name ?? "",
+    delayMinutes: minutesBetween(scheduled, actual),
+    status: disrupted?.status ?? last.status ?? "Unknown",
+    airline: last.airline?.name ?? first.airline?.name ?? "",
   };
 }
 
-// Per-instance cache. The free plan allows roughly 300 lookups a month.
-const cache = new Map<string, Promise<FlightArrival | null>>();
+// Per-instance cache, so choosing a route after a lookup costs nothing. The free plan allows
+// about 200 lookups a month.
+const cache = new Map<string, Promise<FlightArrival[]>>();
 
-/** Returns the normalized flight, or null when the provider has no such flight. */
-export function getFlightArrival(flightNumber: string, date: string): Promise<FlightArrival | null> {
+/**
+ * Every trip this flight number made on this date (local to the departure airport), in
+ * departure order. Usually one. A multi-stop flight such as MCI to MKE to ORD gives each leg
+ * plus the through trip MCI to ORD. Empty when the provider has no such flight.
+ */
+export function getFlightTrips(flightNumber: string, date: string): Promise<FlightArrival[]> {
   const compact = flightNumber.replace(/\s+/g, "").toUpperCase();
   const key = `${compact}|${date}`;
   const hit = cache.get(key);
   if (hit) return hit;
-  const p = fetchFlight(compact, date);
+  const p = fetchTrips(compact, date);
   cache.set(key, p);
   // Only cache real answers. Errors should be retryable.
   p.catch(() => cache.delete(key));
   return p;
 }
 
-async function fetchFlight(compact: string, date: string): Promise<FlightArrival | null> {
+async function fetchTrips(compact: string, date: string): Promise<FlightArrival[]> {
   const key = process.env.AERODATABOX_API_KEY;
   const host = process.env.AERODATABOX_HOST || "aerodatabox.p.rapidapi.com";
   if (!key) throw new FlightProviderError("AERODATABOX_API_KEY is not set");
@@ -111,24 +131,37 @@ async function fetchFlight(compact: string, date: string): Promise<FlightArrival
   });
 
   // 204 and 404 both mean the provider has no such flight.
-  if (res.status === 204 || res.status === 404) return null;
+  if (res.status === 204 || res.status === 404) return [];
   if (!res.ok) throw new FlightProviderError(`AeroDataBox ${res.status}: ${await res.text().catch(() => "")}`);
 
   const text = await res.text();
   if (process.env.LOG_FLIGHT_RAW === "1") console.log("[aerodatabox raw]", compact, date, text);
-  if (!text) return null;
-  const legs = JSON.parse(text) as AdbFlight[];
-  if (!Array.isArray(legs) || legs.length === 0) return null;
+  if (!text) return [];
+  const all = JSON.parse(text) as AdbFlight[];
+  if (!Array.isArray(all) || all.length === 0) return [];
 
-  // A flight number can have several legs. Keep legs departing on the requested local date.
-  // If more than one remains (a multi-stop flight), take the one that arrives last, since we
-  // ask for the flight that reached the final destination. The UI shows the route checked.
-  const sameDay = legs.filter((l) => l.departure?.scheduledTime?.local?.startsWith(date));
-  const pool = sameDay.length ? sameDay : legs;
-  const byArrival = [...pool].sort(
+  // Keep legs departing on the requested local date, in departure order.
+  const sameDay = all.filter((l) => l.departure?.scheduledTime?.local?.startsWith(date));
+  const legs = (sameDay.length ? sameDay : all).sort(
     (a, b) =>
-      Date.parse(toIso(a.arrival?.scheduledTime?.utc) ?? "0") - Date.parse(toIso(b.arrival?.scheduledTime?.utc) ?? "0"),
+      Date.parse(toIso(a.departure?.scheduledTime?.utc) ?? "0") -
+      Date.parse(toIso(b.departure?.scheduledTime?.utc) ?? "0"),
   );
-  const leg = byArrival[byArrival.length - 1];
-  return normalize(leg, `${compact.slice(0, 2)} ${compact.slice(2)}`, date);
+
+  // Every run of connected legs is a trip someone could have taken: each leg on its own, and
+  // each through trip where one leg lands where the next takes off (UA 5680 on 2026-09-27 was
+  // MCI to MKE to ORD). Legs that don't connect stay separate trips.
+  const flightNumber = `${compact.slice(0, 2)} ${compact.slice(2)}`;
+  const trips: FlightArrival[] = [];
+  for (let i = 0; i < legs.length; i++) {
+    for (let j = i; j < legs.length; j++) {
+      if (j > i && legs[j].departure?.airport?.iata !== legs[j - 1].arrival?.airport?.iata) break;
+      trips.push(toTrip(legs.slice(i, j + 1), flightNumber, date));
+    }
+  }
+  // The same route twice in a day (rare) needs the departure time to tell them apart.
+  const counts = new Map<string, number>();
+  for (const t of trips) counts.set(t.route, (counts.get(t.route) ?? 0) + 1);
+  for (const t of trips) if (counts.get(t.route)! > 1) t.route += `@${t.scheduledDepartureUtc ?? ""}`;
+  return trips;
 }

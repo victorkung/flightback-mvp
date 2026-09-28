@@ -30,9 +30,12 @@ function parseFlight(f: unknown): FlightArrival | null {
   const flight: FlightArrival = {
     flightNumber: str(o.flightNumber),
     date: str(o.date),
+    route: str(o.route),
     origin: ap(o.origin),
     destination: ap(o.destination),
-    scheduledArrivalUtc: str(o.scheduledArrivalUtc),
+    via: Array.isArray(o.via) ? o.via.map(ap) : [],
+    scheduledDepartureUtc: str(o.scheduledDepartureUtc) || null,
+    scheduledArrivalUtc: str(o.scheduledArrivalUtc) || null,
     actualArrivalUtc: str(o.actualArrivalUtc) || null,
     delayMinutes: typeof o.delayMinutes === "number" ? o.delayMinutes : null,
     status: str(o.status),

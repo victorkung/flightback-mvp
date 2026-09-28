@@ -31,7 +31,9 @@ export function formatDate(ymd: string): string {
   });
 }
 
-export const routeLabel = (f: FlightArrival) => `${f.origin.iata}-${f.destination.iata}`;
+// Every airport on the trip, as "MCI-MKE-ORD".
+export const routeLabel = (f: FlightArrival) =>
+  [f.origin, ...(f.via ?? []), f.destination].map((a) => a.iata).join("-");
 
 export function routeLong(f: FlightArrival): string {
   const place = (a: FlightArrival["origin"]) => (a.city ? `${a.city} (${a.iata})` : a.iata);

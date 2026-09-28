@@ -8,6 +8,8 @@ import { codeError, emailError, fairAmountError, nameError, ticketError } from "
 export type FlowState = {
   flightNumber: string;
   date: string;
+  /** The trip picked when a flight number made more than one that day. Empty otherwise. */
+  route: string;
   result: CheckResult | null;
   passengers: number;
   details: ClaimDetails;
@@ -21,6 +23,7 @@ export type FlowState = {
 const initial: FlowState = {
   flightNumber: "",
   date: "",
+  route: "",
   result: null,
   passengers: 1,
   details: { confirmationCode: "", names: [""], tickets: [""], payout: "", email: "" },

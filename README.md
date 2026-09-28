@@ -25,7 +25,7 @@ Flow state lives in React context mirrored to `sessionStorage`, so a refresh kee
 
 API routes:
 
-- `POST /api/check-flight` looks up the flight through `lib/flights.ts` and applies the rules in `lib/eligibility.ts`. Results are cached in memory per flight number and date.
+- `POST /api/check-flight` looks up the flight through `lib/flights.ts` and applies the rules in `lib/eligibility.ts`. Results are cached in memory per flight number and date. When one flight number made more than one trip that day (a multi-stop flight like UA 5680 on 2026-09-27, Kansas City to Milwaukee to Chicago), it returns the trips instead, the traveler picks theirs, and the check runs on that trip. A through trip is judged by its arrival at the final stop.
 - `POST /api/setup-intent` creates a Stripe Customer (with `claimId` and email in metadata) and a SetupIntent.
 - `POST /api/submit` validates everything again, confirms with Stripe that the SetupIntent succeeded for this claim, then appends one row to Google Sheets. No card data is ever sent to our server or the sheet.
 
@@ -92,5 +92,5 @@ Redeploy after changing `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, since it is built 
 
 ## Production notes
 
-- Flight data would move to FlightAware AeroAPI. Only `lib/flights.ts` changes: it exposes one function, `getFlightArrival(flightNumber, date)`, that returns a provider-neutral object, and nothing else in the app knows which provider is used.
+- Flight data would move to FlightAware AeroAPI. Only `lib/flights.ts` changes: it exposes one function, `getFlightTrips(flightNumber, date)`, that returns provider-neutral trip objects, and nothing else in the app knows which provider is used.
 - The in-memory flight cache is per server instance. A shared cache would save lookups at scale.

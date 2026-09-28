@@ -1,4 +1,5 @@
 // Shared by the client (fast feedback) and every API route (source of truth).
+import { airlineByCode } from "./airlines";
 import { MAX_FAIR_AMOUNT, MAX_PASSENGERS } from "./constants";
 
 const FLIGHT_RE = /^[A-Z0-9]{2} ?\d{1,4}$/;
@@ -16,6 +17,20 @@ export const normalizeTicket = (v: string) => v.replace(/[\s-]/g, "");
 export function flightNumberError(v: string): string | null {
   if (!v.trim()) return "Enter your flight number.";
   if (!FLIGHT_RE.test(normalizeFlightNumber(v))) return "Use the airline code and number, like AA 2256.";
+  return null;
+}
+
+export function airlineError(code: string): string | null {
+  return airlineByCode(code) ? null : "Choose your airline.";
+}
+
+/** Just the number part, 1 to 4 digits. Leading zeros are dropped, as airlines do. */
+export const normalizeFlightDigits = (v: string) => v.replace(/\D/g, "").replace(/^0+(?=\d)/, "");
+
+export function flightDigitsError(v: string): string | null {
+  const d = normalizeFlightDigits(v);
+  if (!d) return "Enter your flight number.";
+  if (d.length > 4 || d === "0") return "Flight numbers are 1 to 4 digits.";
   return null;
 }
 

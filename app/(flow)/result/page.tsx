@@ -12,12 +12,19 @@ function FlightRows({ flight, children }: { flight: FlightArrival; children?: Re
     <Group>
       <Row
         label={`${flight.origin.city || flight.origin.iata} to ${flight.destination.city || flight.destination.iata}`}
-        sub={[flight.airline, flight.flightNumber, formatDate(flight.date)].filter(Boolean).join(" · ")}
+        sub={[
+          flight.via?.length ? `Via ${flight.via.map((v) => v.city || v.iata).join(", ")}` : "",
+          flight.airline,
+          flight.flightNumber,
+          formatDate(flight.date),
+        ]
+          .filter(Boolean)
+          .join(" · ")}
         strong
       />
       {flight.actualArrivalUtc && (
         <>
-          <Row label={<span className="text-muted">Original arrival</span>} value={formatTime(flight.scheduledArrivalUtc, flight.date)} />
+          <Row label={<span className="text-muted">Original arrival</span>} value={flight.scheduledArrivalUtc ? formatTime(flight.scheduledArrivalUtc, flight.date) : "Unknown"} />
           <Row
             label={<span className="text-muted">Actual arrival, {flight.destination.iata}</span>}
             value={formatTime(flight.actualArrivalUtc, flight.date)}
