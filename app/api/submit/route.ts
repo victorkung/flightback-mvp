@@ -150,7 +150,8 @@ export async function POST(request: Request) {
     .update(intent.id, { metadata: { submitted: "true" } })
     .catch((e) => console.error("[submit] could not flag SetupIntent", e));
 
-  const sent = await sendToSheet(row);
+  // Apps Script occasionally answers a cold start with an error page. One retry covers it.
+  const sent = (await sendToSheet(row)) || (await sendToSheet(row));
   if (!sent) console.error("[submit] sheet write failed. Row for manual entry:", JSON.stringify(row));
 
   // The traveler sees the confirmation either way. We fix sheet problems by hand.

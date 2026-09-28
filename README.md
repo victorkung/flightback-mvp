@@ -8,17 +8,18 @@ The site runs in Stripe test mode only. Use card 4242 4242 4242 4242, any future
 
 ## How it works
 
+`/` is the landing page. "Start my claim" opens the flow:
+
 | Path | Step |
 |---|---|
-| `/` | Landing |
-| `/flight` | Add your flight |
-| `/result` | Eligible or not, passenger count |
-| `/details` | Confirmation code, names, tickets, payout, email |
-| `/fee` | Fee model |
-| `/fair` | Fair amount |
-| `/offer` | Our offer, 10% success fee |
-| `/card` | Save a card (Stripe SetupIntent, never charged) |
-| `/done` | Confirmation with claim ID |
+| `/flight` | 1. Add your flight |
+| `/result` | 2. Eligible or not, passenger count |
+| `/details` | 3. Confirmation code, names, tickets, payout, email |
+| `/fee` | 4. Fee model |
+| `/fair` | 5. Fair amount |
+| `/offer` | 6. Our offer, 10% success fee |
+| `/card` | 7. Save a card (Stripe SetupIntent, never charged) |
+| `/done` | 8. Confirmation with claim ID |
 
 Flow state lives in React context mirrored to `sessionStorage`, so a refresh keeps progress.
 
@@ -38,7 +39,7 @@ npm run dev
 
 ### 1. AeroDataBox (flight data)
 
-1. Create a RapidAPI account and subscribe to [AeroDataBox](https://rapidapi.com/aedbx-aedbx/api/aerodatabox). The Basic plan is free (about 300 lookups a month).
+1. Create a RapidAPI account and subscribe to [AeroDataBox on RapidAPI](https://rapidapi.com/aedbx-aedbx/api/aerodatabox). The Basic plan there is free (400 units a month; a flight lookup costs 2, so about 200 lookups). Subscribing directly on aerodatabox.com has no free plan, so use RapidAPI.
 2. Copy your RapidAPI key into `AERODATABOX_API_KEY`. Leave `AERODATABOX_HOST` as `aerodatabox.p.rapidapi.com`.
 
 Set `LOG_FLIGHT_RAW=1` to log raw provider responses while debugging.

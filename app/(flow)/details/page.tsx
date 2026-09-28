@@ -59,8 +59,8 @@ export default function Details() {
     <form onSubmit={submit} noValidate className="space-y-7">
       <BackLink href="/result" />
       <div className="space-y-1">
-        <Title>What {airline} needs</Title>
-        <p className="text-muted">About 2 minutes. It&apos;s all in your confirmation email.</p>
+        <Title>Claim details</Title>
+        <p className="text-muted">{airline.charAt(0).toUpperCase() + airline.slice(1)} needs these to match your booking. You&apos;ll find them in your confirmation email.</p>
       </div>
 
       <section>

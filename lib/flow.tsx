@@ -31,7 +31,9 @@ const initial: FlowState = {
   done: null,
 };
 
-export const STEPS = ["/", "/flight", "/result", "/details", "/fee", "/fair", "/offer", "/card", "/done"] as const;
+// The claim flow. The landing page at / sits outside it.
+export const STEPS = ["/flight", "/result", "/details", "/fee", "/fair", "/offer", "/card", "/done"] as const;
+const LAST = STEPS.length;
 export const stepOf = (path: string) => Math.max(0, STEPS.indexOf(path as (typeof STEPS)[number])) + 1;
 
 export const detailsValid = (s: FlowState) =>
@@ -44,14 +46,14 @@ export const detailsValid = (s: FlowState) =>
 
 /** The furthest step this state has earned. Pages beyond it redirect back. */
 function reachable(s: FlowState): number {
-  if (s.done) return 9;
-  if (!s.result) return 2;
-  if (!s.result.eligible) return 3;
-  if (!detailsValid(s)) return 4;
-  if (!s.feeModel) return 5;
-  if (s.fairAmount === "" || fairAmountError(Number(s.fairAmount))) return 6;
-  if (!s.offerAccepted) return 7;
-  return 8;
+  if (s.done) return 8;
+  if (!s.result) return 1;
+  if (!s.result.eligible) return 2;
+  if (!detailsValid(s)) return 3;
+  if (!s.feeModel) return 4;
+  if (s.fairAmount === "" || fairAmountError(Number(s.fairAmount))) return 5;
+  if (!s.offerAccepted) return 6;
+  return 7;
 }
 
 const KEY = "flightback-flow-v1";
@@ -107,10 +109,10 @@ export function useStepGuard(): boolean {
   const step = stepOf(path);
   const max = reachable(state);
   // After finishing, the earlier steps are closed so the claim is not filed twice.
-  const allowed = state.done ? step === 9 || step === 1 : step <= max;
+  const allowed = state.done ? step === LAST : step <= max;
 
   useEffect(() => {
-    if (ready && !allowed) router.replace(STEPS[(state.done ? 9 : max) - 1]);
+    if (ready && !allowed) router.replace(STEPS[(state.done ? LAST : max) - 1]);
   }, [ready, allowed, max, router, state.done]);
 
   return ready && allowed;

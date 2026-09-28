@@ -29,8 +29,9 @@ export async function POST(request: Request) {
     const intent = await stripe.setupIntents.create({
       customer: customer.id,
       usage: "off_session",
-      // No redirect-based methods, so the card step always finishes on our page.
-      automatic_payment_methods: { enabled: true, allow_redirects: "never" },
+      // Cards only. Automatic methods also offered bank debits with Link promos, which is off
+      // message for a step that promises to save a card, and cards never redirect off our page.
+      payment_method_types: ["card"],
       metadata: { claimId },
     });
     return Response.json({ clientSecret: intent.client_secret, customerId: customer.id, claimId });

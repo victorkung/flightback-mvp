@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { BackLink, Button, Group, Loading, MarkTile, Muted, Row, SectionLabel, Title } from "@/components/ui";
+import { BackLink, Button, Group, Loading, MarkTile, Muted, Row, Title } from "@/components/ui";
 import { useFlow, useStepGuard } from "@/lib/flow";
 import { AMOUNT_PER_PASSENGER, MAX_PASSENGERS, owedFor } from "@/lib/constants";
 import { formatDate, formatDuration, formatTime, formatUsd } from "@/lib/format";
@@ -72,17 +72,12 @@ export default function Result() {
       <BackLink href="/flight" />
       <div className="space-y-4">
         <MarkTile />
-        <div>
-          <p className="text-lg text-muted">Your flight arrived {formatDuration(flight.delayMinutes!)} late.</p>
-          <h1 className="text-[28px] font-bold leading-tight tracking-tight">You&apos;re likely owed</h1>
-          <p className="text-[64px] font-bold leading-none tracking-tight text-accent" aria-live="polite">
-            {formatUsd(owedFor(n))}
-          </p>
-          <Muted className="mt-2 text-lg">
-            {formatUsd(AMOUNT_PER_PASSENGER)} × {n} {n === 1 ? "passenger" : "passengers"}
-          </Muted>
-        </div>
+        <Title>Your flight arrived {formatDuration(flight.delayMinutes!)} late.</Title>
       </div>
+
+      <FlightRows flight={flight}>
+        <Row label={<span className="text-muted">Rule</span>} value="3h or more late" />
+      </FlightRows>
 
       <Group>
         <div className="flex min-h-16 items-center justify-between gap-4 px-5 py-3">
@@ -119,13 +114,14 @@ export default function Result() {
         </div>
       </Group>
 
-      <section>
-        <SectionLabel>How we calculated this</SectionLabel>
-        <FlightRows flight={flight}>
-          <Row label={<span className="text-muted">Rule</span>} value="3h or more late" />
-        </FlightRows>
-        <Muted className="mt-2 px-1 text-sm">The airline makes the final decision.</Muted>
-      </section>
+      <div aria-live="polite">
+        <p className="text-[28px] font-bold leading-tight tracking-tight">You&apos;re likely owed</p>
+        <p className="text-[64px] font-bold leading-none tracking-tight text-accent">{formatUsd(owedFor(n))}</p>
+        <Muted className="mt-2 text-lg">
+          {formatUsd(AMOUNT_PER_PASSENGER)} × {n} {n === 1 ? "passenger" : "passengers"}. The airline makes the final
+          decision.
+        </Muted>
+      </div>
 
       <Button onClick={() => router.push("/details")}>Continue</Button>
     </div>

@@ -125,6 +125,7 @@ function CardForm() {
   const router = useRouter();
   const [permission, setPermission] = useState(false);
   const [complete, setComplete] = useState(false);
+  const [elementReady, setElementReady] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [permError, setPermError] = useState("");
@@ -191,8 +192,18 @@ function CardForm() {
       <section>
         <SectionLabel>Payment method</SectionLabel>
         <p className="mb-3 px-1 font-semibold">Nothing is charged today.</p>
-        <Card>
-          <PaymentElement options={{ layout: "tabs" }} onChange={(e) => setComplete(e.complete)} />
+        <Card className="relative min-h-40">
+          {!elementReady && (
+            <div className="absolute inset-0">
+              <Loading />
+            </div>
+          )}
+          {/* Link off: it adds a pay-by-bank tab with promos, which does not belong on a card step. */}
+          <PaymentElement
+            options={{ layout: "tabs", wallets: { link: "never" } }}
+            onReady={() => setElementReady(true)}
+            onChange={(e) => setComplete(e.complete)}
+          />
         </Card>
         <p className="mt-3 rounded-2xl bg-accent-soft px-4 py-3 text-sm text-accent-dark">
           Test mode: use 4242 4242 4242 4242, any future date, any CVC.
