@@ -2,7 +2,7 @@
 
 Flightback helps travelers whose US domestic flight reached its final destination 3 or more hours late claim the $250 per passenger the airline owes them (a fictional rule for this case study). This beta checks a flight, shows what the traveler is likely owed, collects claim details, asks what fee feels fair, and saves a card for a 10% success fee. Nothing is filed automatically and no card is charged. The one thing it tests: will delayed travelers pay us to file? A saved card is the signal.
 
-**Live:** LIVE_URL_PENDING
+**Live:** https://flightback-mvp.vercel.app
 
 The site runs in Stripe test mode only. Use card 4242 4242 4242 4242, any future date, any CVC.
 
