@@ -32,18 +32,25 @@ const toIso = (t?: string) => {
 const LANDED = new Set(["Arrived"]);
 
 /*
- * Which arrival time counts as actual:
- * For a landed flight AeroDataBox returns scheduledTime, revisedTime and usually runwayTime.
- * - revisedTime on a landed flight is the actual gate (in-block) arrival. That is when
- *   passengers actually reach the destination, so it is our first choice.
- * - runwayTime is touchdown. We fall back to it when revisedTime is missing.
- * - predictedTime is a model estimate and is never used.
- * We only trust these fields once status is Arrived; before that, revisedTime is an estimate.
- * All math is done on the UTC variants.
+ * Which arrival time counts as actual. Checked against real responses (AA 2256 and the ORD
+ * arrivals board for 2026-09-27):
+ * - A landed flight (status "Arrived") has arrival.scheduledTime, revisedTime and runwayTime,
+ *   each with utc and local variants. There is no separate "actual" field.
+ * - runwayTime is observed touchdown.
+ * - revisedTime is the gate (in-block) arrival. It can be an estimate made just after
+ *   touchdown (AA 2256: runway 02:04Z, revised 02:16Z, lastUpdated 02:09Z), and on bad days it
+ *   runs hours past touchdown while planes wait for a gate.
+ * We use revisedTime, because reaching the gate is when passengers actually arrive, and fall
+ * back to runwayTime when revisedTime is missing or earlier than touchdown (impossible for a
+ * gate time). predictedTime is a model estimate and is never used. Before status is Arrived,
+ * none of these are final, so we return null. All math uses the UTC variants.
  */
 function actualArrival(f: AdbFlight): string | null {
   if (!LANDED.has(f.status ?? "")) return null;
-  return toIso(f.arrival?.revisedTime?.utc) ?? toIso(f.arrival?.runwayTime?.utc);
+  const gate = toIso(f.arrival?.revisedTime?.utc);
+  const runway = toIso(f.arrival?.runwayTime?.utc);
+  if (gate && runway && Date.parse(gate) < Date.parse(runway)) return runway;
+  return gate ?? runway;
 }
 
 function airport(a?: AdbAirport) {

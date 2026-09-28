@@ -19,6 +19,7 @@
 }
 
 html {
+  scroll-behavior: smooth;
   background: var(--color-bg);
   color: var(--color-ink);
   -webkit-text-size-adjust: 100%;
@@ -32,4 +33,10 @@ input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }

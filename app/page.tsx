@@ -246,9 +246,6 @@ export default function Landing() {
                 </div>
               ))}
             </div>
-            <p className="mt-10 text-sm text-white/50">
-              Industry figures, largely from claim companies. Treat them as directional.
-            </p>
           </div>
         </section>
 

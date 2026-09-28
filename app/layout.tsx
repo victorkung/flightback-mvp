@@ -16,7 +16,7 @@ export const viewport: Viewport = { themeColor: "#F2F3F5", width: "device-width"
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${inter.variable} antialiased`}>
+    <html lang="en" data-scroll-behavior="smooth" className={`${inter.variable} antialiased`}>
       <body className="min-h-dvh bg-bg text-ink">
         <div className="bg-ink px-4 py-2 text-center text-xs font-medium text-white">
           Demo. No real claims are filed and no card is charged.
