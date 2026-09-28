@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { loadStripe, type Appearance } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
-import { BackLink, Button, Card, ErrorText, Loading, Muted, Title } from "@/components/ui";
+import { BackLink, Button, Card, ErrorText, Loading, Muted, SectionLabel, Title } from "@/components/ui";
 import { useFlow, useStepGuard, type FlowState } from "@/lib/flow";
 import { OFFER_PCT, feeFor, owedFor } from "@/lib/constants";
 import { formatUsd } from "@/lib/format";
@@ -17,16 +17,16 @@ const stripePromise = pk.startsWith("pk_test_") ? loadStripe(pk) : null;
 const appearance: Appearance = {
   theme: "stripe",
   variables: {
-    colorPrimary: "#A3560A",
-    colorText: "#1D1D1F",
-    colorTextSecondary: "#5C5A55",
-    colorDanger: "#B3261E",
+    colorPrimary: "#0072D0",
+    colorText: "#111418",
+    colorTextSecondary: "#6B7079",
+    colorDanger: "#C62828",
     fontFamily: "Inter, system-ui, sans-serif",
     borderRadius: "12px",
     spacingUnit: "4px",
     fontSizeBase: "16px",
   },
-  rules: { ".Input": { borderColor: "#E2DED5", boxShadow: "none", padding: "14px" } },
+  rules: { ".Input": { borderColor: "#E6E8EB", boxShadow: "none", padding: "14px" } },
 };
 
 export default function CardStep() {
@@ -61,9 +61,9 @@ export default function CardStep() {
   if (!ok) return <Loading />;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
       <BackLink href="/offer" />
-      <div className="space-y-2">
+      <div className="space-y-1">
         <Title>Save a card</Title>
         <Muted>
           We charge {formatUsd(feeFor(state.passengers))}, which is {OFFER_PCT}% of {formatUsd(owedFor(state.passengers))},
@@ -187,21 +187,20 @@ function CardForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} noValidate className="space-y-5">
-      <Card className="space-y-4">
-        <p className="font-semibold">Nothing is charged today.</p>
-        <PaymentElement
-          options={{ layout: "tabs" }}
-          onChange={(e) => setComplete(e.complete)}
-        />
-      </Card>
-
-      <p className="rounded-xl border border-dashed border-line bg-card px-4 py-3 text-sm text-muted">
-        Test mode: use 4242 4242 4242 4242, any future date, any CVC.
-      </p>
+    <form onSubmit={onSubmit} noValidate className="space-y-6">
+      <section>
+        <SectionLabel>Payment method</SectionLabel>
+        <p className="mb-3 px-1 font-semibold">Nothing is charged today.</p>
+        <Card>
+          <PaymentElement options={{ layout: "tabs" }} onChange={(e) => setComplete(e.complete)} />
+        </Card>
+        <p className="mt-3 rounded-2xl bg-accent-soft px-4 py-3 text-sm text-accent-dark">
+          Test mode: use 4242 4242 4242 4242, any future date, any CVC.
+        </p>
+      </section>
 
       <div>
-        <label className="flex cursor-pointer items-start gap-3">
+        <label className="flex cursor-pointer items-start gap-3 px-1 text-[17px]">
           <input
             type="checkbox"
             required
@@ -211,7 +210,7 @@ function CardForm() {
               setPermError("");
             }}
             aria-invalid={!!permError || undefined}
-            className="mt-0.5 size-5 shrink-0 accent-accent"
+            className="mt-0.5 size-6 shrink-0 accent-accent"
           />
           <span>
             {single

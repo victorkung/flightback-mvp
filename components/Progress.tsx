@@ -7,20 +7,22 @@ export function Progress() {
   const step = stepOf(usePathname());
   const total = STEPS.length;
   return (
-    <div className="mb-6">
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
-        Step {step} of {total}
-      </p>
+    <div className="mb-5">
       <div
-        className="h-1.5 w-full overflow-hidden rounded-full bg-line"
+        className="flex gap-1"
         role="progressbar"
         aria-valuemin={1}
         aria-valuemax={total}
         aria-valuenow={step}
         aria-label={`Step ${step} of ${total}`}
       >
-        <div className="h-full rounded-full bg-accent transition-all" style={{ width: `${(step / total) * 100}%` }} />
+        {STEPS.map((s, i) => (
+          <span key={s} className={`h-1 flex-1 rounded-full ${i < step ? "bg-accent" : "bg-line"}`} />
+        ))}
       </div>
+      <p className="mt-2 text-[13px] text-muted" aria-hidden>
+        Step {step} of {total}
+      </p>
     </div>
   );
 }

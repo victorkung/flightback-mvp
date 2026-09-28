@@ -2,8 +2,22 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { BackLink, Button, Card, Choice, ErrorText, Field, Loading, Muted, Title } from "@/components/ui";
+import {
+  BackLink,
+  Button,
+  Check,
+  ErrorText,
+  Field,
+  Group,
+  GroupField,
+  Loading,
+  Row,
+  SectionLabel,
+  Segmented,
+  Title,
+} from "@/components/ui";
 import { detailsValid, useFlow, useStepGuard } from "@/lib/flow";
+import { airlineName, formatDate } from "@/lib/format";
 import { codeError, emailError, nameError, normalizeCode, normalizeTicket, ticketError } from "@/lib/validation";
 import type { ClaimDetails, Payout } from "@/lib/types";
 
@@ -12,8 +26,10 @@ export default function Details() {
   const { state, update } = useFlow();
   const router = useRouter();
   const [showErrors, setShowErrors] = useState(false);
-  if (!ok) return <Loading />;
+  if (!ok || !state.result?.eligible) return <Loading />;
 
+  const flight = state.result.flight;
+  const airline = airlineName(flight);
   const d = state.details;
   const set = (patch: Partial<ClaimDetails>) => update((s) => ({ details: { ...s.details, ...patch } }));
   const setAt = (key: "names" | "tickets", i: number, v: string) =>
@@ -40,12 +56,20 @@ export default function Details() {
   }
 
   return (
-    <form onSubmit={submit} noValidate className="space-y-6">
+    <form onSubmit={submit} noValidate className="space-y-7">
       <BackLink href="/result" />
-      <div className="space-y-2">
-        <Title>Claim details</Title>
-        <Muted>The airline needs these to match your booking. You&apos;ll find them in your confirmation email.</Muted>
+      <div className="space-y-1">
+        <Title>What {airline} needs</Title>
+        <p className="text-muted">About 2 minutes. It&apos;s all in your confirmation email.</p>
       </div>
+
+      <section>
+        <SectionLabel>Your trip</SectionLabel>
+        <Group>
+          <Row label={`${formatDate(flight.date)} · ${flight.origin.iata} to ${flight.destination.iata}`} value={<Check />} />
+          <Row label={flight.flightNumber} value={<Check />} />
+        </Group>
+      </section>
 
       <Field
         label="Confirmation code"
@@ -61,42 +85,44 @@ export default function Details() {
       />
 
       {d.names.map((name, i) => (
-        <Card key={i} className="space-y-4">
-          <p className="font-semibold">{d.names.length > 1 ? `Passenger ${i + 1}` : "Passenger"}</p>
-          <Field
-            label="Full name"
-            autoComplete={i === 0 ? "name" : "off"}
-            value={name}
-            onChange={(e) => setAt("names", i, e.target.value)}
-            help={i === 0 ? "As shown on the ticket." : undefined}
-            error={err(nameError, name)}
-          />
-          <Field
-            label="Ticket number"
-            inputMode="numeric"
-            autoComplete="off"
-            maxLength={17}
-            value={d.tickets[i] ?? ""}
-            onChange={(e) => setAt("tickets", i, e.target.value.replace(/[^\d\s-]/g, ""))}
-            help="13 digits, usually starting with the airline's code. Find it in your confirmation email."
-            error={err(ticketError, d.tickets[i] ?? "")}
-          />
-        </Card>
+        <section key={i}>
+          <SectionLabel>{d.names.length > 1 ? `Passenger ${i + 1}` : "Passenger"}</SectionLabel>
+          <Group>
+            <GroupField
+              label="Full name, as on the ticket"
+              autoComplete={i === 0 ? "name" : "off"}
+              value={name}
+              onChange={(e) => setAt("names", i, e.target.value)}
+              error={err(nameError, name)}
+            />
+            <GroupField
+              label="Ticket number"
+              placeholder="001 2345 678901"
+              inputMode="numeric"
+              autoComplete="off"
+              maxLength={17}
+              value={d.tickets[i] ?? ""}
+              onChange={(e) => setAt("tickets", i, e.target.value.replace(/[^\d\s-]/g, ""))}
+              error={err(ticketError, d.tickets[i] ?? "")}
+            />
+          </Group>
+        </section>
       ))}
+      <p className="-mt-4 px-1 text-sm text-muted">
+        13 digits, usually starting with the airline&apos;s code. Find it in your confirmation email.
+      </p>
 
-      <fieldset className="space-y-2">
-        <legend className="mb-1.5 text-sm font-semibold">How would you like to be paid</legend>
-        <Choice name="payout" value="cash" checked={d.payout === "cash"} onChange={(v) => set({ payout: v as Payout })}>
-          Cash
-        </Choice>
-        <Choice
+      <fieldset>
+        <SectionLabel as="legend">How {airline} should pay you</SectionLabel>
+        <Segmented<Payout>
           name="payout"
-          value="credit"
-          checked={d.payout === "credit"}
-          onChange={(v) => set({ payout: v as Payout })}
-        >
-          Travel credit
-        </Choice>
+          value={d.payout}
+          onChange={(v) => set({ payout: v })}
+          options={[
+            { value: "cash", label: "Cash" },
+            { value: "credit", label: "Travel credit" },
+          ]}
+        />
         <ErrorText>{showErrors && !d.payout ? "Choose how you'd like to be paid." : null}</ErrorText>
       </fieldset>
 
@@ -105,6 +131,7 @@ export default function Details() {
         type="email"
         autoComplete="email"
         inputMode="email"
+        placeholder="you@example.com"
         value={d.email}
         onChange={(e) => set({ email: e.target.value })}
         help="We only use this to send updates about your claim."

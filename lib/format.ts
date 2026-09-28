@@ -12,14 +12,13 @@ export const formatUsd = (n: number) =>
   `$${n.toLocaleString("en-US", { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 })}`;
 
 // Shown in the traveler's own time zone, with the zone label so there is no doubt.
-export function formatTime(iso: string): string {
-  return new Date(iso).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    timeZoneName: "short",
-  });
+// The date is added only when it differs from sameDayAs (YYYY-MM-DD), to keep rows short.
+export function formatTime(iso: string, sameDayAs?: string): string {
+  const d = new Date(iso);
+  const time = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short" });
+  const ymd = d.toLocaleDateString("en-CA");
+  if (sameDayAs && ymd === sameDayAs) return time;
+  return `${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })}, ${time}`;
 }
 
 export function formatDate(ymd: string): string {
@@ -38,3 +37,5 @@ export function routeLong(f: FlightArrival): string {
   const place = (a: FlightArrival["origin"]) => (a.city ? `${a.city} (${a.iata})` : a.iata);
   return `${place(f.origin)} to ${place(f.destination)}`;
 }
+
+export const airlineName = (f: FlightArrival) => f.airline || "the airline";

@@ -75,9 +75,9 @@ export default function AddFlight() {
   }
 
   return (
-    <form onSubmit={submit} noValidate className="space-y-6">
+    <form onSubmit={submit} noValidate className="space-y-7">
       <BackLink href="/" />
-      <div className="space-y-2">
+      <div className="space-y-1">
         <Title>Add your flight</Title>
         <p className="text-muted">Enter the flight that brought you to your final destination.</p>
       </div>

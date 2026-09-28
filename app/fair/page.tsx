@@ -40,9 +40,9 @@ export default function Fair() {
           {success ? "Percentage" : "Monthly price in dollars"}
         </label>
         <div
-          className={`flex min-h-16 items-center gap-2 rounded-xl border bg-white px-4 focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/25 ${error ? "border-error" : "border-line"}`}
+          className={`flex min-h-20 items-center gap-2 rounded-2xl border-2 bg-card px-5 focus-within:border-accent ${error ? "border-error" : "border-transparent"}`}
         >
-          {!success && <span className="text-2xl font-semibold text-muted">$</span>}
+          {!success && <span className="text-[34px] font-bold text-muted">$</span>}
           <input
             id="fair"
             type="number"
@@ -57,9 +57,9 @@ export default function Fair() {
               setError(null);
               update({ fairAmount: e.target.value, offerAccepted: false });
             }}
-            className="w-full bg-transparent text-2xl font-semibold outline-none"
+            className="w-full bg-transparent text-[34px] font-bold outline-none"
           />
-          <span className="text-2xl font-semibold text-muted">{success ? "%" : "a month"}</span>
+          <span className="shrink-0 text-xl font-semibold text-muted">{success ? "%" : "a month"}</span>
         </div>
         <ErrorText>{error}</ErrorText>
       </div>

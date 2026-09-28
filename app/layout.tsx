@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import Image from "next/image";
 import Link from "next/link";
 import { FlowProvider } from "@/lib/flow";
 import { Progress } from "@/components/Progress";
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export const viewport: Viewport = { themeColor: "#F5F3EE", width: "device-width", initialScale: 1 };
+export const viewport: Viewport = { themeColor: "#F2F3F5", width: "device-width", initialScale: 1 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
@@ -24,9 +25,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </div>
         <FlowProvider>
           <div className="mx-auto w-full max-w-[480px] px-4 pb-16 pt-5">
-            <header className="mb-6">
-              <Link href="/" className="text-lg font-bold tracking-tight">
-                Flightback
+            <header className="mb-5">
+              <Link href="/" aria-label="Flightback home" className="inline-block">
+                <Image src="/logo.png" alt="Flightback" width={123} height={22} priority />
               </Link>
             </header>
             <Progress />

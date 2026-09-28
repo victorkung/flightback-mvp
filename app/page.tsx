@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Button, Muted } from "@/components/ui";
+import { Button, Check, Group, MarkTile, Muted, Row } from "@/components/ui";
 import { useFlow } from "@/lib/flow";
 
 export default function Landing() {
@@ -14,19 +14,20 @@ export default function Landing() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-7">
       <div className="space-y-4">
-        <h1 className="text-[32px] font-bold leading-[1.15] tracking-tight">
+        <MarkTile />
+        <h1 className="text-[32px] font-bold leading-[1.12] tracking-tight">
           Your flight was 3+ hours late. You may be owed $250 per passenger.
         </h1>
         <Muted className="text-lg">We check your flight, file the claim, and only get paid if you do.</Muted>
       </div>
+      <Group>
+        <Row label="US domestic flights, 3 or more hours late" value={<Check />} />
+        <Row label="Checking your flight is free" value={<Check />} />
+        <Row label="Our fee is shown before you add a card" value={<Check />} />
+      </Group>
       <Button onClick={start}>Check my flight</Button>
-      <ul className="space-y-3 border-t border-line pt-6 text-sm text-muted">
-        <li>Covers US domestic flights that reached their final destination 3 or more hours late.</li>
-        <li>Checking your flight is free and takes about a minute.</li>
-        <li>We tell you our fee before you add a card.</li>
-      </ul>
     </div>
   );
 }
